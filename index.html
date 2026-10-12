@@ -205,7 +205,7 @@ details textarea{min-height:80px;font:12px/1.4 ui-monospace,Menlo,Consolas,monos
   <div class="toolbar">
     <select id="mode" aria-label="Day type">
       <option value="auto">Auto (Sunday review, else college)</option>
-      <option value="weekday">College day · 8 AM–3 PM</option>
+      <option value="weekday">College day · 08:00–15:00</option>
       <option value="sunday">Sunday review</option>
       <option value="holidayBusy">Holiday · work due</option>
       <option value="holidayFree">Holiday · free</option>
@@ -218,7 +218,7 @@ details textarea{min-height:80px;font:12px/1.4 ui-monospace,Menlo,Consolas,monos
 
   <form class="add" id="addForm" onsubmit="return false">
     <input id="addTitle" type="text" placeholder="Add a task" aria-label="New task" maxlength="80" autocomplete="off">
-    <input id="addTime" type="text" placeholder="Time" aria-label="Time (optional)" maxlength="20" autocomplete="off">
+    <input id="addTime" type="text" placeholder="e.g. 18:00" aria-label="Time (optional)" maxlength="20" autocomplete="off">
     <button class="btn" id="addBtn" type="button">Add</button>
   </form>
 
@@ -266,52 +266,52 @@ details textarea{min-height:80px;font:12px/1.4 ui-monospace,Menlo,Consolas,monos
 /* ---------- schedules: [time, title, description, tag] ---------- */
 const SCHEDULES = {
   weekday: [
-    ["6:30–7:30 AM","Morning routine","Wake up, get ready, breakfast.","rest"],
-    ["8:00 AM–3:00 PM","College","Lectures. Use free periods for notes.","college"],
-    ["3:00–4:00 PM","Lunch and rest","Recharge after college.","rest"],
-    ["4:00–5:00 PM","College work","Assignments, lab records, revision.","college"],
-    ["5:00–6:00 PM","DSA","One concept, 2–3 problems.","dsa"],
-    ["6:00–6:30 PM","Break","Walk, snack.","rest"],
-    ["6:30–7:30 PM","Cybersecurity","Lesson, Linux/networking or a lab.","cyber"],
-    ["7:30–8:30 PM","Dinner and free time","","rest"],
-    ["8:30–9:15 PM","DAA","Complexity, dry runs, numericals.","daa"],
-    ["9:15–10:30 PM","Wind down","Review the day, plan tomorrow.","rest"]
+    ["06:30–07:30","Morning routine","Wake up, get ready, breakfast.","rest"],
+    ["08:00–15:00","College","Lectures. Use free periods for notes.","college"],
+    ["15:00–16:00","Lunch and rest","Recharge after college.","rest"],
+    ["16:00–17:00","College work","Assignments, lab records, revision.","college"],
+    ["17:00–18:00","DSA","One concept, 2–3 problems.","dsa"],
+    ["18:00–18:30","Break","Walk, snack.","rest"],
+    ["18:30–19:30","Cybersecurity","Lesson, Linux/networking or a lab.","cyber"],
+    ["19:30–20:30","Dinner and free time","","rest"],
+    ["20:30–21:15","DAA","Complexity, dry runs, numericals.","daa"],
+    ["21:15–22:30","Wind down","Review the day, plan tomorrow.","rest"]
   ],
   sunday: [
-    ["9:00–10:00 AM","Morning routine","","rest"],
-    ["10:00–11:00 AM","DSA revision","Revise a topic, solve 2 problems.","dsa"],
-    ["11:00 AM–12:00 PM","DAA practice","Algorithm questions and numericals.","daa"],
-    ["12:00–2:00 PM","Lunch and free time","","rest"],
-    ["2:00–3:00 PM","College catch-up","Pending assignments, hard topics.","college"],
-    ["3:00–4:00 PM","Hobbies and rest","","rest"],
-    ["4:00–5:00 PM","Cybersecurity lab","One beginner hands-on lab.","cyber"],
-    ["5:00–6:00 PM","Security project","Improve your log analyzer or document a lab.","cyber"],
-    ["6:00–8:00 PM","Exercise and dinner","","rest"],
-    ["8:00–8:30 PM","Weekly review","What worked? Plan next week.","own"]
+    ["09:00–10:00","Morning routine","","rest"],
+    ["10:00–11:00","DSA revision","Revise a topic, solve 2 problems.","dsa"],
+    ["11:00–12:00","DAA practice","Algorithm questions and numericals.","daa"],
+    ["12:00–14:00","Lunch and free time","","rest"],
+    ["14:00–15:00","College catch-up","Pending assignments, hard topics.","college"],
+    ["15:00–16:00","Hobbies and rest","","rest"],
+    ["16:00–17:00","Cybersecurity lab","One beginner hands-on lab.","cyber"],
+    ["17:00–18:00","Security project","Improve your log analyzer or document a lab.","cyber"],
+    ["18:00–20:00","Exercise and dinner","","rest"],
+    ["20:00–20:30","Weekly review","What worked? Plan next week.","own"]
   ],
   holidayBusy: [
-    ["9:00–10:00 AM","Morning routine","","rest"],
-    ["10:00 AM–12:00 PM","College priority block","Assignments, exams or lab work.","college"],
-    ["12:00–1:00 PM","Lunch and rest","","rest"],
-    ["1:00–2:00 PM","DSA","Solve 2 problems, review mistakes.","dsa"],
-    ["2:00–2:45 PM","DAA","One concept or numerical.","daa"],
-    ["2:45–4:00 PM","Long break","","rest"],
-    ["4:00–5:00 PM","Cybersecurity","One lesson or lab.","cyber"]
+    ["09:00–10:00","Morning routine","","rest"],
+    ["10:00–12:00","College priority block","Assignments, exams or lab work.","college"],
+    ["12:00–13:00","Lunch and rest","","rest"],
+    ["13:00–14:00","DSA","Solve 2 problems, review mistakes.","dsa"],
+    ["14:00–14:45","DAA","One concept or numerical.","daa"],
+    ["14:45–16:00","Long break","","rest"],
+    ["16:00–17:00","Cybersecurity","One lesson or lab.","cyber"]
   ],
   holidayFree: [
-    ["9:00–10:00 AM","Morning routine","","rest"],
-    ["10:00–11:30 AM","DSA deep practice","Revisit one hard question.","dsa"],
-    ["11:30 AM–12:30 PM","DAA","Algorithms and complexity.","daa"],
-    ["12:30–2:00 PM","Lunch and break","","rest"],
-    ["2:00–3:30 PM","Cybersecurity course","Networking, Linux, SIEM, fundamentals.","cyber"],
-    ["4:30–5:30 PM","Cybersecurity project","Build or improve a portfolio piece.","cyber"]
+    ["09:00–10:00","Morning routine","","rest"],
+    ["10:00–11:30","DSA deep practice","Revisit one hard question.","dsa"],
+    ["11:30–12:30","DAA","Algorithms and complexity.","daa"],
+    ["12:30–14:00","Lunch and break","","rest"],
+    ["14:00–15:30","Cybersecurity course","Networking, Linux, SIEM, fundamentals.","cyber"],
+    ["16:30–17:30","Cybersecurity project","Build or improve a portfolio piece.","cyber"]
   ],
   holidayLight: [
     ["Anytime","Optional revision","20–30 minutes of flashcards or one concept.","own"],
     ["All day","Rest and family time","No pressure. Enjoy the day.","rest"]
   ]
 };
-const MODE_NAMES = {weekday:"College day · 8–3",sunday:"Sunday review",holidayBusy:"Holiday · work due",holidayFree:"Holiday · free",holidayLight:"Festival · rest"};
+const MODE_NAMES = {weekday:"College day · 08–15",sunday:"Sunday review",holidayBusy:"Holiday · work due",holidayFree:"Holiday · free",holidayLight:"Festival · rest"};
 const WEEKDAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const STORE_KEY = "studyPlannerMinimal_v2";
 const GOAL = 0.7;
@@ -436,16 +436,13 @@ function renderSide(){
 function loadNotes(){ $("notes").value = getDay(current).notes || ""; }
 
 /* ---------- time awareness ---------- */
-function toMin(h,m,ap){ return (+h % 12) * 60 + +m + (ap === "PM" ? 720 : 0); }
 function range(timeStr){
   const parts = timeStr.split("–");
   if(parts.length !== 2) return null;
-  const re = /(\d{1,2}):(\d{2})\s*(AM|PM)?/;
+  const re = /(\d{1,2}):(\d{2})/;
   const a = parts[0].match(re), b = parts[1].match(re);
-  if(!a || !b || !b[3]) return null;
-  let start = toMin(a[1], a[2], a[3] || b[3]);
-  const end = toMin(b[1], b[2], b[3]);
-  if(start > end) start -= 720;
+  if(!a || !b) return null;
+  const start = +a[1] * 60 + +a[2], end = +b[1] * 60 + +b[2];
   return {start, end, endLabel: parts[1].trim()};
 }
 function nowInfo(){
@@ -604,13 +601,11 @@ $("mBreak").addEventListener("click",()=>setTMode("brk"));
     if(i===2 || i===4){ const c = document.createElement("span"); c.className = "colon"; c.textContent = ":"; flip.append(c); }
     const d = makeDigit(); digits.push(d); flip.append(d);
   }
-  flip.append(ampm);
   function setFlip(n, animate){
-    const h = n.getHours() % 12 || 12;
+    const h = n.getHours();
     const str = pad(h) + pad(n.getMinutes()) + pad(n.getSeconds());
     digits.forEach((d,i) => setDigit(d, str[i], animate));
-    ampm.textContent = n.getHours() < 12 ? "AM" : "PM";
-    if(n.getSeconds() === 0 || !flip.dataset.t){ flip.setAttribute("aria-label", "Current time " + n.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})); flip.dataset.t = 1; }
+    if(n.getSeconds() === 0 || !flip.dataset.t){ flip.setAttribute("aria-label", "Current time " + n.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",hour12:false})); flip.dataset.t = 1; }
   }
   let firstRun = true;
   update();

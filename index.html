@@ -1,9 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Study Planner</title>
+<title>Nxis</title>
+<meta name="theme-color" content="#0d1014">
+<meta name="description" content="Nxis: a daily study planner for college, DSA, DAA and cybersecurity.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nxis">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
 <style>
 :root{
@@ -244,7 +253,7 @@ details textarea{min-height:80px;font:12px/1.4 ui-monospace,Menlo,Consolas,monos
       <div class="foot-actions">
         <button class="btn sm ghost" id="exportBtn">Copy backup</button>
         <button class="btn sm ghost" id="importBtn">Restore</button>
-        <button class="btn sm ghost" id="themeBtn">Theme: auto</button>
+        <button class="btn sm ghost" id="themeBtn">Theme: dark</button>
         <button class="btn sm ghost" id="resetBtn">Reset this day</button>
       </div>
       <p class="hint">Everything is saved in this browser only. Copy a backup before clearing browser data or switching devices.</p>
@@ -318,7 +327,7 @@ let toastTimer;
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200); }
 
 /* ---------- storage (safe: falls back to memory) ---------- */
-let store = { days:{}, theme:"auto", sessions:{} };
+let store = { days:{}, theme:"dark", sessions:{} };
 function load(){
   try{ const raw = localStorage.getItem(STORE_KEY); if(raw){ const p = JSON.parse(raw); if(p && typeof p==="object") store = Object.assign(store,p); } }catch(e){}
   store.days = store.days || {}; store.sessions = store.sessions || {};
@@ -496,15 +505,15 @@ $("importBtn").addEventListener("click",()=>{
   try{
     const p = JSON.parse($("backup").value);
     if(!p || p.app!=="study-planner" || !p.data || typeof p.data.days!=="object") throw 0;
-    store = Object.assign({days:{},theme:"auto",sessions:{}}, p.data); save(); applyTheme(); $("hideDone").checked = !!store.hideDone; render(); loadNotes(); toast("Backup restored");
+    store = Object.assign({days:{},theme:"dark",sessions:{}}, p.data); save(); applyTheme(); $("hideDone").checked = !!store.hideDone; render(); loadNotes(); toast("Backup restored");
   }catch(e){ toast("That doesn't look like a backup"); }
 });
 function applyTheme(){
-  const t = store.theme || "auto", root = document.documentElement;
+  const t = store.theme || "dark", root = document.documentElement;
   if(t==="auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme",t);
   $("themeBtn").textContent = "Theme: " + t;
 }
-$("themeBtn").addEventListener("click",()=>{ const order=["auto","light","dark"]; store.theme = order[(order.indexOf(store.theme||"auto")+1)%3]; save(); applyTheme(); });
+$("themeBtn").addEventListener("click",()=>{ const order=["dark","light","auto"]; store.theme = order[(order.indexOf(store.theme||"dark")+1)%3]; save(); applyTheme(); });
 let resetArmed = false, resetTimer;
 $("resetBtn").addEventListener("click",()=>{
   if(!resetArmed){ resetArmed = true; $("resetBtn").textContent = "Tap again to confirm"; resetTimer = setTimeout(()=>{ resetArmed=false; $("resetBtn").textContent="Reset this day"; },3000); return; }
@@ -518,7 +527,7 @@ let tMode = "focus", remaining = DUR.focus, endAt = 0, tick = null;
 function showClock(){
   const s = Math.max(0,Math.ceil(remaining/1000)), txt = pad(Math.floor(s/60))+":"+pad(s%60);
   $("clock").textContent = txt;
-  document.title = tick ? `${txt} · Study Planner` : "Study Planner";
+  document.title = tick ? `${txt} · Nxis` : "Nxis";
 }
 function setTMode(m){
   stopTimer(); tMode = m; remaining = DUR[m]; showClock();
@@ -627,6 +636,11 @@ function checkRollover(){
 }
 setInterval(checkRollover, 30000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) checkRollover(); });
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("./sw.js").catch(() => {}); });
+}
 </script>
 </body>
 </html>

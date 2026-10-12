@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Study Planner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--ink:#14171c;--muted:#6b7380;--line:#e4e7ec;--accent:#0f766e;--accent-soft:#d9f0ec;--on-accent:#fff;
+  --dsa:#2563eb;--cyber:#dc2626;--daa:#7c3aed;--college:#d97706;--rest:#94a3b8;--own:#0f766e;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1014;--surface:#161a20;--ink:#eceff4;--muted:#8f99a8;--line:#262c35;--accent:#5eead4;--accent-soft:#12312e;--on-accent:#05211e;
+    --dsa:#60a5fa;--cyber:#f87171;--daa:#a78bfa;--college:#fbbf24;--rest:#64748b;--own:#5eead4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1014;--surface:#161a20;--ink:#eceff4;--muted:#8f99a8;--line:#262c35;--accent:#5eead4;--accent-soft:#12312e;--on-accent:#05211e;
+  --dsa:#60a5fa;--cyber:#f87171;--daa:#a78bfa;--college:#fbbf24;--rest:#64748b;--own:#5eead4;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:640px;margin:0 auto;padding:24px 18px 56px}
+
+/* header */
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+h1{margin:0;font-size:34px;line-height:1.1;font-weight:700;letter-spacing:-.02em}
+.sub{margin:4px 0 0;color:var(--muted);font-size:15px}
+.nav{display:flex;gap:4px;align-items:center}
+.icon-btn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:18px}
+.icon-btn:hover{background:var(--line);color:var(--ink)}
+.today-btn{height:36px;padding:0 12px;border-radius:10px;font-size:14px;font-weight:600;color:var(--accent)}
+.today-btn:hover{background:var(--accent-soft)}
+
+/* week */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:22px 0 24px}
+.day{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;border-radius:14px;color:var(--muted);font-size:12px;font-weight:600}
+.day:hover{background:var(--line)}
+.day.sel{background:var(--surface);box-shadow:0 0 0 1px var(--line);color:var(--ink)}
+.day.now .num{color:var(--accent)}
+.ring{position:relative;width:34px;height:34px}
+.ring svg{display:block;transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:600}
+.ring .bg{stroke:var(--line)}.ring .fg{stroke:var(--accent);transition:stroke-dashoffset .25s}
+
+/* progress */
+.progress-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px;font-size:14px;color:var(--muted)}
+.progress-row strong{color:var(--ink);font-size:15px}
+.bar{height:4px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar div{height:100%;width:0;background:var(--accent);border-radius:4px;transition:width .25s}
+
+/* toolbar */
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 10px;flex-wrap:wrap}
+select{appearance:none;-webkit-appearance:none;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%238f99a8' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid var(--line);border-radius:10px;padding:7px 32px 7px 12px;font-size:14px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+
+/* tasks */
+.tasks{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.task{display:grid;grid-template-columns:22px minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.task:last-child{border-bottom:0}
+.task input{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:1.5px solid var(--muted);border-radius:6px;display:grid;place-items:center;cursor:pointer;transition:.12s;background:transparent}
+.task input:checked{background:var(--accent);border-color:var(--accent)}
+.task input:checked::after{content:"";width:9px;height:5px;border:2px solid var(--on-accent);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.t-title{font-weight:600;display:flex;align-items:center;gap:8px}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--rest)}
+.dot.dsa{background:var(--dsa)}.dot.cyber{background:var(--cyber)}.dot.daa{background:var(--daa)}.dot.college{background:var(--college)}.dot.own{background:var(--own)}
+.t-desc{font-size:13px;color:var(--muted);margin-top:1px}
+.t-time{font-size:12px;color:var(--muted);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.task.done .t-title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.task.done .t-desc{display:none}
+.task.now{background:var(--accent-soft)}
+.task.now .t-time{color:var(--accent);font-weight:600}
+.status{margin:0 0 10px;font-size:14px;color:var(--muted)}
+.status strong{color:var(--ink);font-weight:600}
+.status:empty{display:none}
+.del{color:var(--muted);font-size:18px;line-height:1;width:24px;height:24px;border-radius:6px}
+.del:hover{background:var(--line);color:var(--cyber)}
+.task .spacer{width:0}
+.empty{padding:28px;text-align:center;color:var(--muted);font-size:15px}
+
+/* add */
+.add{display:flex;gap:8px;margin-top:10px}
+.add input{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;min-width:0;font-size:15px}
+.add input::placeholder{color:var(--muted)}
+#addTitle{flex:1}
+#addTime{width:110px}
+.btn{background:var(--accent);color:var(--on-accent);border-radius:12px;padding:10px 16px;font-weight:600;font-size:15px}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--line);filter:none}
+.btn.sm{padding:7px 12px;font-size:14px;border-radius:10px}
+
+/* panels */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.panel h2{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--muted)}
+.timer{font-size:44px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.seg{display:inline-flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:10px}
+.seg button{padding:4px 12px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.row{display:flex;gap:8px;margin-top:12px}
+.stat{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.stat small{font-size:15px;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:4px}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.notes{margin-top:12px;width:100%}
+textarea{width:100%;min-height:96px;resize:vertical;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;line-height:1.5}
+textarea::placeholder{color:var(--muted)}
+.label{font-size:14px;font-weight:600;color:var(--muted);margin:24px 0 8px}
+
+/* footer */
+details{margin-top:28px;border-top:1px solid var(--line);padding-top:14px}
+summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:600;list-style:none}
+summary::-webkit-details-marker{display:none}
+details .body{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+details textarea{min-height:80px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace}
+.foot-actions{display:flex;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:10}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(max-width:560px){
+  h1{font-size:28px}
+  .panels{grid-template-columns:1fr}
+  .task{grid-template-columns:22px minmax(0,1fr) auto}
+  .t-time{grid-column:2;grid-row:2;text-align:left;margin-top:-6px}
+  .task .del{grid-column:3;grid-row:1}
+  #addTime{width:90px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div>
+      <h1 id="title">Today</h1>
+      <p class="sub" id="subtitle"></p>
+    </div>
+    <div class="nav">
+      <button class="icon-btn" id="prev" aria-label="Previous day">‹</button>
+      <button class="today-btn" id="today">Today</button>
+      <button class="icon-btn" id="next" aria-label="Next day">›</button>
+    </div>
+  </header>
+
+  <nav class="week" id="week" aria-label="This week"></nav>
+
+  <div class="progress-row"><span><strong id="doneText">0 of 0</strong> done</span><span id="leftText"></span></div>
+  <div class="bar"><div id="bar"></div></div>
+
+  <div class="toolbar">
+    <select id="mode" aria-label="Day type">
+      <option value="auto">Auto (Sunday review, else college)</option>
+      <option value="weekday">College day · 8 AM–3 PM</option>
+      <option value="sunday">Sunday review</option>
+      <option value="holidayBusy">Holiday · work due</option>
+      <option value="holidayFree">Holiday · free</option>
+      <option value="holidayLight">Festival · rest</option>
+    </select>
+    <label class="toggle"><input type="checkbox" id="hideDone"> Hide done</label>
+  </div>
+
+  <p class="status" id="status" aria-live="polite"></p>
+  <section class="tasks" id="tasks" aria-label="Checklist"></section>
+
+  <form class="add" id="addForm" onsubmit="return false">
+    <input id="addTitle" type="text" placeholder="Add a task" aria-label="New task" maxlength="80" autocomplete="off">
+    <input id="addTime" type="text" placeholder="Time" aria-label="Time (optional)" maxlength="20" autocomplete="off">
+    <button class="btn" id="addBtn" type="button">Add</button>
+  </form>
+
+  <div class="panels">
+    <section class="panel" aria-label="Focus timer">
+      <h2>Focus timer</h2>
+      <div class="seg" role="group" aria-label="Timer mode">
+        <button id="mFocus" class="on">Focus 25</button><button id="mBreak">Break 5</button>
+      </div>
+      <div class="timer" id="clock">25:00</div>
+      <div class="row">
+        <button class="btn sm" id="tStart">Start</button>
+        <button class="btn sm ghost" id="tReset">Reset</button>
+      </div>
+      <p class="hint" id="sessions"></p>
+    </section>
+    <section class="panel" aria-label="Streak">
+      <h2>Streak</h2>
+      <div class="stat"><span id="streak">0</span><small id="streakUnit">days</small></div>
+      <p class="hint">A day counts when you finish at least 70% of its tasks.</p>
+      <div class="stat" style="margin-top:16px;font-size:28px"><span id="weekPct">0%</span><small>this week</small></div>
+    </section>
+  </div>
+
+  <div class="label">Notes for this day</div>
+  <textarea id="notes" placeholder="What did you learn? What's stuck?" aria-label="Notes"></textarea>
+
+  <details>
+    <summary>Backup, theme and reset</summary>
+    <div class="body">
+      <textarea id="backup" placeholder="Your backup text appears here. To restore, paste a backup and press Restore." aria-label="Backup data"></textarea>
+      <div class="foot-actions">
+        <button class="btn sm ghost" id="exportBtn">Copy backup</button>
+        <button class="btn sm ghost" id="importBtn">Restore</button>
+        <button class="btn sm ghost" id="themeBtn">Theme: auto</button>
+        <button class="btn sm ghost" id="resetBtn">Reset this day</button>
+      </div>
+      <p class="hint">Everything is saved in this browser only. Copy a backup before clearing browser data or switching devices.</p>
+    </div>
+  </details>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- schedules: [time, title, description, tag] ---------- */
+const SCHEDULES = {
+  weekday: [
+    ["6:30–7:30 AM","Morning routine","Wake up, get ready, breakfast.","rest"],
+    ["8:00 AM–3:00 PM","College","Lectures. Use free periods for notes.","college"],
+    ["3:00–4:00 PM","Lunch and rest","Recharge after college.","rest"],
+    ["4:00–5:00 PM","College work","Assignments, lab records, revision.","college"],
+    ["5:00–6:00 PM","DSA","One concept, 2–3 problems.","dsa"],
+    ["6:00–6:30 PM","Break","Walk, snack.","rest"],
+    ["6:30–7:30 PM","Cybersecurity","Lesson, Linux/networking or a lab.","cyber"],
+    ["7:30–8:30 PM","Dinner and free time","","rest"],
+    ["8:30–9:15 PM","DAA","Complexity, dry runs, numericals.","daa"],
+    ["9:15–10:30 PM","Wind down","Review the day, plan tomorrow.","rest"]
+  ],
+  sunday: [
+    ["9:00–10:00 AM","Morning routine","","rest"],
+    ["10:00–11:00 AM","DSA revision","Revise a topic, solve 2 problems.","dsa"],
+    ["11:00 AM–12:00 PM","DAA practice","Algorithm questions and numericals.","daa"],
+    ["12:00–2:00 PM","Lunch and free time","","rest"],
+    ["2:00–3:00 PM","College catch-up","Pending assignments, hard topics.","college"],
+    ["3:00–4:00 PM","Hobbies and rest","","rest"],
+    ["4:00–5:00 PM","Cybersecurity lab","One beginner hands-on lab.","cyber"],
+    ["5:00–6:00 PM","Security project","Improve your log analyzer or document a lab.","cyber"],
+    ["6:00–8:00 PM","Exercise and dinner","","rest"],
+    ["8:00–8:30 PM","Weekly review","What worked? Plan next week.","own"]
+  ],
+  holidayBusy: [
+    ["9:00–10:00 AM","Morning routine","","rest"],
+    ["10:00 AM–12:00 PM","College priority block","Assignments, exams or lab work.","college"],
+    ["12:00–1:00 PM","Lunch and rest","","rest"],
+    ["1:00–2:00 PM","DSA","Solve 2 problems, review mistakes.","dsa"],
+    ["2:00–2:45 PM","DAA","One concept or numerical.","daa"],
+    ["2:45–4:00 PM","Long break","","rest"],
+    ["4:00–5:00 PM","Cybersecurity","One lesson or lab.","cyber"]
+  ],
+  holidayFree: [
+    ["9:00–10:00 AM","Morning routine","","rest"],
+    ["10:00–11:30 AM","DSA deep practice","Revisit one hard question.","dsa"],
+    ["11:30 AM–12:30 PM","DAA","Algorithms and complexity.","daa"],
+    ["12:30–2:00 PM","Lunch and break","","rest"],
+    ["2:00–3:30 PM","Cybersecurity course","Networking, Linux, SIEM, fundamentals.","cyber"],
+    ["4:30–5:30 PM","Cybersecurity project","Build or improve a portfolio piece.","cyber"]
+  ],
+  holidayLight: [
+    ["Anytime","Optional revision","20–30 minutes of flashcards or one concept.","own"],
+    ["All day","Rest and family time","No pressure. Enjoy the day.","rest"]
+  ]
+};
+const MODE_NAMES = {weekday:"College day · 8–3",sunday:"Sunday review",holidayBusy:"Holiday · work due",holidayFree:"Holiday · free",holidayLight:"Festival · rest"};
+const WEEKDAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const STORE_KEY = "studyPlannerMinimal_v2";
+const GOAL = 0.7;
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,"0");
+const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => new Date(s + "T12:00:00");
+const addDays = (s,n) => { const d = parse(s); d.setDate(d.getDate()+n); return fmt(d); };
+const TODAY = () => fmt(new Date());
+let toastTimer;
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200); }
+
+/* ---------- storage (safe: falls back to memory) ---------- */
+let store = { days:{}, theme:"auto", sessions:{} };
+function load(){
+  try{ const raw = localStorage.getItem(STORE_KEY); if(raw){ const p = JSON.parse(raw); if(p && typeof p==="object") store = Object.assign(store,p); } }catch(e){}
+  store.days = store.days || {}; store.sessions = store.sessions || {};
+}
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){} }
+const getDay = d => store.days[d] || {checks:{},custom:[],notes:"",mode:"auto"};
+function editDay(d){ if(!store.days[d]) store.days[d] = {checks:{},custom:[],notes:"",mode:"auto"}; return store.days[d]; }
+
+/* ---------- model ---------- */
+let current = TODAY();
+function modeFor(d){ const m = getDay(d).mode || "auto"; return m !== "auto" ? m : (parse(d).getDay()===0 ? "sunday" : "weekday"); }
+function tasksFor(d){
+  const base = SCHEDULES[modeFor(d)].map((t,i)=>({id:"s"+i,time:t[0],title:t[1],desc:t[2],tag:t[3]}));
+  const custom = getDay(d).custom.map(c=>({id:c.id,time:c.time||"",title:c.title,desc:"",tag:"own",custom:true}));
+  return base.concat(custom);
+}
+function stats(d){
+  const t = tasksFor(d), c = getDay(d).checks;
+  const done = t.filter(x=>c[x.id]).length;
+  return {done,total:t.length,pct:t.length?done/t.length:0};
+}
+function streak(){
+  let d = TODAY();
+  if(stats(d).pct < GOAL) d = addDays(d,-1);
+  let n = 0;
+  while(n < 365 && stats(d).pct >= GOAL){ n++; d = addDays(d,-1); }
+  return n;
+}
+function weekStart(s){ const d = parse(s); const off = (d.getDay()+6)%7; return addDays(s,-off); }
+
+/* ---------- render ---------- */
+function render(){
+  const d = parse(current), isToday = current === TODAY();
+  $("title").textContent = isToday ? "Today" : (current === addDays(TODAY(),1) ? "Tomorrow" : current === addDays(TODAY(),-1) ? "Yesterday" : WEEKDAYS[d.getDay()]);
+  const mode = modeFor(current);
+  $("subtitle").textContent = d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"}) + " · " + MODE_NAMES[mode];
+  $("mode").value = getDay(current).mode || "auto";
+  $("today").style.visibility = isToday ? "hidden" : "visible";
+  renderWeek(); renderTasks(); renderProgress(); renderSide(); renderStatus();
+}
+
+function renderWeek(){
+  const w = $("week"); w.innerHTML = "";
+  const start = weekStart(current), C = 2*Math.PI*14;
+  for(let i=0;i<7;i++){
+    const ds = addDays(start,i), dd = parse(ds), st = stats(ds);
+    const b = document.createElement("button");
+    b.className = "day" + (ds===current?" sel":"") + (ds===TODAY()?" now":"");
+    b.setAttribute("aria-label", dd.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"}) + ", " + Math.round(st.pct*100) + "% done");
+    b.innerHTML = `<span>${WEEKDAYS[dd.getDay()].slice(0,3)}</span>
+      <span class="ring"><svg width="34" height="34" viewBox="0 0 34 34"><circle class="bg" cx="17" cy="17" r="14" fill="none" stroke-width="3"/><circle class="fg" cx="17" cy="17" r="14" fill="none" stroke-width="3" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-st.pct)}"/></svg><span class="num">${dd.getDate()}</span></span>`;
+    b.addEventListener("click",()=>{ current = ds; render(); loadNotes(); });
+    w.append(b);
+  }
+}
+
+function renderTasks(){
+  const list = $("tasks"), hide = $("hideDone").checked, checks = getDay(current).checks;
+  list.innerHTML = "";
+  const tasks = tasksFor(current).filter(t => !(hide && checks[t.id]));
+  if(!tasks.length){
+    const e = document.createElement("div"); e.className = "empty";
+    e.textContent = hide ? "All done. Nice work." : "Nothing planned. Add a task below.";
+    list.append(e); return;
+  }
+  const nowId = (nowInfo().cur || {}).id;
+  tasks.forEach(t=>{
+    const row = document.createElement("label"); row.className = "task" + (checks[t.id] ? " done" : "") + (t.id===nowId ? " now" : "");
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!checks[t.id];
+    cb.setAttribute("aria-label", "Mark " + t.title + " done");
+    cb.addEventListener("change",()=>{ editDay(current).checks[t.id] = cb.checked; save(); render(); });
+    const body = document.createElement("div");
+    const title = document.createElement("div"); title.className = "t-title";
+    const dot = document.createElement("span"); dot.className = "dot " + t.tag;
+    const tt = document.createElement("span"); tt.textContent = t.title;
+    title.append(dot, tt); body.append(title);
+    if(t.desc){ const ds = document.createElement("div"); ds.className = "t-desc"; ds.textContent = t.desc; body.append(ds); }
+    const time = document.createElement("div"); time.className = "t-time"; time.textContent = t.time;
+    row.append(cb, body, time);
+    if(t.custom){
+      const del = document.createElement("button"); del.type = "button"; del.className = "del"; del.textContent = "×"; del.setAttribute("aria-label","Delete " + t.title);
+      del.addEventListener("click",e=>{ e.preventDefault(); const day = editDay(current); day.custom = day.custom.filter(c=>c.id!==t.id); delete day.checks[t.id]; save(); render(); });
+      row.append(del);
+    } else { const sp = document.createElement("span"); sp.className = "spacer"; row.append(sp); }
+    list.append(row);
+  });
+}
+
+function renderProgress(){
+  const s = stats(current);
+  $("doneText").textContent = `${s.done} of ${s.total}`;
+  $("leftText").textContent = s.done===s.total && s.total>0 ? "All done" : `${s.total-s.done} left`;
+  $("bar").style.width = Math.round(s.pct*100) + "%";
+}
+
+function renderSide(){
+  const n = streak();
+  $("streak").textContent = n; $("streakUnit").textContent = n===1 ? "day" : "days";
+  const start = weekStart(current); let sum = 0;
+  for(let i=0;i<7;i++) sum += stats(addDays(start,i)).pct;
+  $("weekPct").textContent = Math.round(sum/7*100) + "%";
+  const sess = store.sessions[TODAY()] || 0;
+  $("sessions").textContent = sess ? `${sess} focus session${sess>1?"s":""} today` : "Focus 25 minutes, then rest 5.";
+}
+
+function loadNotes(){ $("notes").value = getDay(current).notes || ""; }
+
+/* ---------- time awareness ---------- */
+function toMin(h,m,ap){ return (+h % 12) * 60 + +m + (ap === "PM" ? 720 : 0); }
+function range(timeStr){
+  const parts = timeStr.split("–");
+  if(parts.length !== 2) return null;
+  const re = /(\d{1,2}):(\d{2})\s*(AM|PM)?/;
+  const a = parts[0].match(re), b = parts[1].match(re);
+  if(!a || !b || !b[3]) return null;
+  let start = toMin(a[1], a[2], a[3] || b[3]);
+  const end = toMin(b[1], b[2], b[3]);
+  if(start > end) start -= 720;
+  return {start, end, endLabel: parts[1].trim()};
+}
+function nowInfo(){
+  if(current !== TODAY()) return {cur:null,next:null,over:false};
+  const n = new Date(), mins = n.getHours()*60 + n.getMinutes();
+  const timed = tasksFor(current).map(t => ({t, r: range(t.time)})).filter(x => x.r && !x.t.custom);
+  const cur = timed.find(x => mins >= x.r.start && mins < x.r.end);
+  const next = timed.filter(x => x.r.start > mins).sort((a,b) => a.r.start - b.r.start)[0];
+  const over = timed.length > 0 && !cur && !next;
+  return {cur: cur ? cur.t : null, curR: cur ? cur.r : null, next: next ? next.t : null, nextR: next ? next.r : null, over};
+}
+function renderStatus(){
+  const el = $("status"), info = nowInfo();
+  if(current !== TODAY()){ el.innerHTML = ""; return; }
+  const esc = s => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  if(info.cur){
+    const inCollege = info.cur.tag === "college" && info.cur.title === "College";
+    el.innerHTML = inCollege
+      ? `In college until <strong>${esc(info.curR.endLabel)}</strong>. Study starts after.`
+      : `Now: <strong>${esc(info.cur.title)}</strong> until ${esc(info.curR.endLabel)}`;
+  } else if(info.next){
+    el.innerHTML = `Next: <strong>${esc(info.next.title)}</strong> at ${esc(info.next.time.split("–")[0].trim())}`;
+  } else if(info.over){
+    el.textContent = "Today's schedule is finished. Rest up.";
+  } else el.textContent = "";
+}
+
+/* ---------- actions ---------- */
+function addTask(){
+  const t = $("addTitle").value.trim(); if(!t){ $("addTitle").focus(); return; }
+  editDay(current).custom.push({id:"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,5), title:t, time:$("addTime").value.trim()});
+  $("addTitle").value = ""; $("addTime").value = ""; save(); render(); $("addTitle").focus();
+}
+$("addBtn").addEventListener("click", addTask);
+$("addForm").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); addTask(); } });
+
+$("prev").addEventListener("click",()=>{ current = addDays(current,-1); render(); loadNotes(); });
+$("next").addEventListener("click",()=>{ current = addDays(current,1); render(); loadNotes(); });
+$("today").addEventListener("click",()=>{ current = TODAY(); render(); loadNotes(); });
+$("mode").addEventListener("change",e=>{ editDay(current).mode = e.target.value; save(); render(); });
+$("hideDone").addEventListener("change",()=>{ store.hideDone = $("hideDone").checked; save(); renderTasks(); });
+let noteTimer;
+$("notes").addEventListener("input",e=>{ const v = e.target.value; clearTimeout(noteTimer); noteTimer = setTimeout(()=>{ editDay(current).notes = v; save(); },300); });
+document.addEventListener("keydown",e=>{
+  if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.key==="ArrowLeft") $("prev").click(); else if(e.key==="ArrowRight") $("next").click();
+});
+
+/* ---------- backup / theme / reset ---------- */
+$("exportBtn").addEventListener("click", async ()=>{
+  const ta = $("backup"); ta.value = JSON.stringify({app:"study-planner",version:2,exportedAt:new Date().toISOString(),data:store});
+  ta.focus(); ta.select();
+  try{ await navigator.clipboard.writeText(ta.value); toast("Backup copied"); }
+  catch(e){ try{ document.execCommand("copy") ? toast("Backup copied") : toast("Select the text and copy it"); }catch(_){ toast("Select the text and copy it"); } }
+});
+$("importBtn").addEventListener("click",()=>{
+  try{
+    const p = JSON.parse($("backup").value);
+    if(!p || p.app!=="study-planner" || !p.data || typeof p.data.days!=="object") throw 0;
+    store = Object.assign({days:{},theme:"auto",sessions:{}}, p.data); save(); applyTheme(); $("hideDone").checked = !!store.hideDone; render(); loadNotes(); toast("Backup restored");
+  }catch(e){ toast("That doesn't look like a backup"); }
+});
+function applyTheme(){
+  const t = store.theme || "auto", root = document.documentElement;
+  if(t==="auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme",t);
+  $("themeBtn").textContent = "Theme: " + t;
+}
+$("themeBtn").addEventListener("click",()=>{ const order=["auto","light","dark"]; store.theme = order[(order.indexOf(store.theme||"auto")+1)%3]; save(); applyTheme(); });
+let resetArmed = false, resetTimer;
+$("resetBtn").addEventListener("click",()=>{
+  if(!resetArmed){ resetArmed = true; $("resetBtn").textContent = "Tap again to confirm"; resetTimer = setTimeout(()=>{ resetArmed=false; $("resetBtn").textContent="Reset this day"; },3000); return; }
+  clearTimeout(resetTimer); resetArmed = false; $("resetBtn").textContent = "Reset this day";
+  delete store.days[current]; save(); render(); loadNotes(); toast("Day reset");
+});
+
+/* ---------- focus timer ---------- */
+const DUR = {focus:25*60*1000, brk:5*60*1000};
+let tMode = "focus", remaining = DUR.focus, endAt = 0, tick = null;
+function showClock(){
+  const s = Math.max(0,Math.ceil(remaining/1000)), txt = pad(Math.floor(s/60))+":"+pad(s%60);
+  $("clock").textContent = txt;
+  document.title = tick ? `${txt} · Study Planner` : "Study Planner";
+}
+function setTMode(m){
+  stopTimer(); tMode = m; remaining = DUR[m]; showClock();
+  $("mFocus").classList.toggle("on", m==="focus"); $("mBreak").classList.toggle("on", m==="brk");
+}
+function stopTimer(){ clearInterval(tick); tick = null; $("tStart").textContent = remaining < DUR[tMode] && remaining > 0 ? "Resume" : "Start"; }
+function startTimer(){
+  endAt = Date.now() + remaining; $("tStart").textContent = "Pause";
+  tick = setInterval(()=>{
+    remaining = endAt - Date.now();
+    if(remaining <= 0){
+      clearInterval(tick); tick = null;
+      if(tMode==="focus"){ const k = TODAY(); store.sessions[k] = (store.sessions[k]||0)+1; save(); renderSide(); toast("Focus session done. Take a break."); setTMode("brk"); }
+      else { toast("Break over. Ready when you are."); setTMode("focus"); }
+      return;
+    }
+    showClock();
+  },250);
+  showClock();
+}
+$("tStart").addEventListener("click",()=>{ if(tick){ remaining = Math.max(0,endAt-Date.now()); stopTimer(); showClock(); } else startTimer(); });
+$("tReset").addEventListener("click",()=>setTMode(tMode));
+$("mFocus").addEventListener("click",()=>setTMode("focus"));
+$("mBreak").addEventListener("click",()=>setTMode("brk"));
+
+/* ---------- init ---------- */
+load(); applyTheme();
+$("hideDone").checked = !!store.hideDone;
+render(); loadNotes(); showClock();
+
+/* ---------- daily reset: new day = fresh checklist ---------- */
+let lastToday = TODAY();
+function checkRollover(){
+  const t = TODAY();
+  if(t !== lastToday){
+    const wasOnToday = current === lastToday;
+    lastToday = t;
+    if(wasOnToday){ current = t; loadNotes(); }
+    render();
+    toast("New day. Fresh checklist.");
+  } else { renderTasks(); renderStatus(); }
+}
+setInterval(checkRollover, 30000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) checkRollover(); });
+</script>
+</body>
+</html>

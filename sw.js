@@ -1,4 +1,4 @@
-const CACHE = "nxis-v9";
+const CACHE = "nxis-v10";
 const FILES = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

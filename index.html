@@ -37,7 +37,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sa
 button,input,select,textarea{font:inherit;color:inherit;border-radius:0}
 button{cursor:pointer;background:none;border:0;padding:0}
 :focus-visible{outline:1px solid var(--accent);outline-offset:2px}
-.wrap{max-width:560px;margin:0 auto;padding:28px 20px 64px}
+.wrap{max-width:560px;margin:0 auto;padding:28px 20px 64px;touch-action:pan-y pinch-zoom}
+body{overflow-x:clip}
 .mono{font-family:var(--mono)}
 
 /* header */
@@ -334,6 +335,7 @@ kbd{font:600 11px var(--mono);border:1px solid var(--line);padding:1px 5px;color
 
   <nav class="week" id="week" aria-label="This week"></nav>
 
+  <div id="dayView">
   <div class="progress-row"><span><strong id="doneText">0 of 0</strong> done</span><span id="leftText"></span></div>
   <div class="bar"><div id="bar"></div></div>
 
@@ -357,6 +359,7 @@ kbd{font:600 11px var(--mono);border:1px solid var(--line);padding:1px 5px;color
     <button class="btn" id="addBtn" type="button">Add</button>
   </form>
   <div class="under"><button class="btn sm line" id="carryBtn" type="button">Carry unfinished to next day →</button></div>
+  </div>
 
   <section class="focus-card" aria-label="Focus timer">
     <div class="fc-head">
@@ -658,7 +661,7 @@ function renderWeek(){
     b.className = "day" + (ds===current?" sel":"") + (ds===TODAY()?" now":"");
     b.setAttribute("aria-label", dd.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"}) + ", " + Math.round(st.pct*100) + "% done");
     b.innerHTML = `<span class="wd">${WEEKDAYS[dd.getDay()].slice(0,3)}</span><span class="num">${dd.getDate()}</span><span class="pb"><i style="width:${Math.round(st.pct*100)}%"></i></span>`;
-    b.addEventListener("click",()=>{ current = ds; render(); loadNotes(); });
+    b.addEventListener("click",()=>goDay(ds));
     w.append(b);
   }
 }
@@ -778,7 +781,7 @@ function renderInsights(){
     b.className = c + (ds===today ? " cur" : "") + (ds===current ? " sel" : "");
     b.title = `${ds}: ${Math.round(st.pct*100)}%`;
     b.setAttribute("aria-label", b.title);
-    b.addEventListener("click",()=>{ current = ds; render(); loadNotes(); window.scrollTo({top:0,behavior:"smooth"}); });
+    b.addEventListener("click",()=>{ goDay(ds); window.scrollTo({top:0,behavior:"smooth"}); });
     heat.append(b);
   }
 }
@@ -842,9 +845,9 @@ $("carryBtn").addEventListener("click",()=>{
   toast(`Carried ${todo.length} task${todo.length>1?"s":""} to ${next === addDays(TODAY(),1) ? "tomorrow" : "the next day"}.`);
 });
 
-$("prev").addEventListener("click",()=>{ current = addDays(current,-1); render(); loadNotes(); });
-$("next").addEventListener("click",()=>{ current = addDays(current,1); render(); loadNotes(); });
-$("today").addEventListener("click",()=>{ current = TODAY(); render(); loadNotes(); });
+$("prev").addEventListener("click",()=>goDay(addDays(current,-1)));
+$("next").addEventListener("click",()=>goDay(addDays(current,1)));
+$("today").addEventListener("click",()=>goDay(TODAY()));
 $("mode").addEventListener("change",e=>{ editDay(current).mode = e.target.value; save(); render(); });
 $("hideDone").addEventListener("change",()=>{ store.hideDone = $("hideDone").checked; save(); renderTasks(); });
 let noteTimer;
@@ -1139,6 +1142,63 @@ $("resetBtn").addEventListener("click",()=>{
   clearTimeout(resetTimer); resetArmed = false; $("resetBtn").textContent = "Reset this day";
   delete store.days[current]; save(); render(); loadNotes(); toast("Day reset");
 });
+
+/* ---------- day navigation: slide animation + swipe ---------- */
+const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let navAnims = [];
+function goDay(ds){
+  if(ds === current) return;
+  const dir = ds > current ? 1 : -1;
+  current = ds; render(); loadNotes();
+  if(reduceMotion()) return;
+  navAnims.forEach(a => a.cancel()); navAnims = [];
+  [$("dayView"), document.querySelector(".head > div")].forEach(el=>{
+    if(!el || !el.animate) return;
+    navAnims.push(el.animate(
+      [{transform:`translateX(${dir*28}px)`,opacity:0},{transform:"translateX(0)",opacity:1}],
+      {duration:220,easing:"cubic-bezier(.2,.7,.2,1)"}
+    ));
+  });
+}
+(function swipe(){
+  let sx = 0, sy = 0, st = 0, active = false, horiz = false;
+  const view = () => $("dayView");
+  const blocked = t => t && t.closest && t.closest("input,textarea,select,details,.heat,.seg");
+  const reset = commit => {
+    const v = view();
+    v.style.transition = commit ? "none" : "transform .2s ease, opacity .2s ease";
+    v.style.transform = ""; v.style.opacity = "";
+    if(!commit) setTimeout(()=>{ v.style.transition = ""; }, 230); else v.style.transition = "";
+  };
+  document.addEventListener("touchstart", e=>{
+    if(e.touches.length !== 1 || blocked(e.target)){ active = false; return; }
+    const t = e.touches[0];
+    if(t.clientX < 24 || t.clientX > window.innerWidth - 24){ active = false; return; }  /* leave OS edge-back gestures alone */
+    sx = t.clientX; sy = t.clientY; st = Date.now(); active = true; horiz = false;
+  }, {passive:true});
+  document.addEventListener("touchmove", e=>{
+    if(!active) return;
+    const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if(!horiz){
+      if(Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)){ active = false; return; }   /* it's a scroll */
+      if(Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.4) horiz = true;
+    }
+    if(horiz && !reduceMotion()){
+      const v = view(); v.style.transition = "none";
+      v.style.transform = `translateX(${Math.max(-48, Math.min(48, dx * .35))}px)`;
+      v.style.opacity = String(1 - Math.min(.35, Math.abs(dx) / 500));
+    }
+  }, {passive:true});
+  document.addEventListener("touchend", e=>{
+    if(!active) return; active = false;
+    const t = e.changedTouches && e.changedTouches[0]; if(!t){ reset(false); return; }
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    const commit = horiz && Math.abs(dx) >= 64 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - st < 900;
+    reset(commit);
+    if(commit) goDay(addDays(current, dx < 0 ? 1 : -1));   /* swipe left = next day, right = previous */
+  }, {passive:true});
+  document.addEventListener("touchcancel", ()=>{ if(active){ active = false; reset(false); } }, {passive:true});
+})();
 
 /* ---------- keyboard shortcuts ---------- */
 document.addEventListener("keydown",e=>{

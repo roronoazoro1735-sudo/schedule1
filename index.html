@@ -258,7 +258,10 @@ details textarea{min-height:72px;font:11px/1.4 var(--mono)}
 /* topics */
 .subj-block{padding:12px 0;border-bottom:1px solid var(--line)}
 .subj-block:last-child{border-bottom:0}
-.sb-head{display:flex;align-items:center;gap:8px;font-weight:500}
+.subj-block.closed{padding:8px 0}
+.sb-head{display:flex;align-items:center;gap:8px;font-weight:500;width:100%;text-align:left;padding:2px 0;cursor:pointer}
+.sb-head:hover .chev{color:var(--ink)}
+.chev{width:10px;color:var(--muted);font-size:10px;flex:none}
 .sb-head .pct{margin-left:auto;font:400 12px var(--mono);color:var(--muted)}
 .topic{display:grid;grid-template-columns:16px 1fr auto;gap:10px;align-items:center;padding:6px 0;font-size:14px;cursor:pointer}
 .topic.done span{color:var(--muted);text-decoration:line-through}
@@ -587,7 +590,7 @@ function normalize(){
   store.exams = Array.isArray(store.exams) ? store.exams : [];
   store.topics = Object.assign({dsa:[],cyber:[],daa:[]}, store.topics || {});
   TOPIC_KEYS.forEach(k => { if(!Array.isArray(store.topics[k])) store.topics[k] = []; });
-  store.schedules = store.schedules || {}; store.notified = store.notified || {};
+  store.schedules = store.schedules || {}; store.notified = store.notified || {}; store.topicsClosed = store.topicsClosed || {};
   store.settings = Object.assign({}, DEF_SETTINGS, store.settings || {});
 }
 function load(){
@@ -1006,9 +1009,13 @@ function renderTopics(focusKey){
   TOPIC_KEYS.forEach(k=>{
     const list = store.topics[k], done = list.filter(x=>x.d).length, pct = list.length ? Math.round(done/list.length*100) : 0;
     const blk = h("div","subj-block");
-    const head = h("div","sb-head"); head.append(h("i","dot "+k), h("span",null,SUBJECTS[k]), h("span","pct",`${done}/${list.length} · ${pct}%`));
+    const closed = !!store.topicsClosed[k] && focusKey !== k;
+    const head = h("button","sb-head"); head.type = "button"; head.setAttribute("aria-expanded", String(!closed));
+    head.append(h("span","chev",closed ? "▸" : "▾"), h("i","dot "+k), h("span",null,SUBJECTS[k]), h("span","pct",`${done}/${list.length} · ${pct}%`));
+    head.addEventListener("click",()=>{ store.topicsClosed[k] = !closed; save(); renderTopics(); });
     const bar = h("div","bar"); bar.style.margin = "8px 0 4px"; const fill = h("div"); fill.style.width = pct + "%"; bar.append(fill);
     blk.append(head, bar);
+    if(closed){ blk.classList.add("closed"); bar.remove(); box.append(blk); return; }
     list.forEach(tp=>{
       const row = h("label","topic" + (tp.d ? " done" : ""));
       const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!tp.d;
